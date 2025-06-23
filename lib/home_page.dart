@@ -1,5 +1,6 @@
 import 'package:basic_note_app/app_bar_and_fab_button_ui.dart';
 import 'package:basic_note_app/db_helper.dart';
+import 'package:basic_note_app/note_model.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -12,7 +13,7 @@ class HomePage extends StatefulWidget {
 class _HomePage extends State<HomePage> {
 
   NoteDatabase db = NoteDatabase.getInstance();
-  List listOfNote = []; // Top level declaration so it can access
+  List<NoteModel> listOfNote = []; // Top level declaration so it can access
 
   void openBottomSheet({bool isUpdating = false, int? noteId,
      String? previousTitle, String? previousDescription}
@@ -123,15 +124,18 @@ class _HomePage extends State<HomePage> {
                       if (titleController.text.isNotEmpty || descController.text.isNotEmpty) {
 
                         if (isUpdating) {
-                          await db.updateNote(
-                            title: titleController.text='Untitled',
-                            description: descController.text ='',
-                            id: noteId!,
-                          );
+                          await db.updateNote(NoteModel(
+                            noteId: noteId,
+                            noteTitle: titleController.text,
+                            noteDescription: descController.text,
+                            createAt: DateTime.now().microsecondsSinceEpoch.toString()
+                          ));
+
                         } else {
-                          await db.addNote(
-                            title: titleController.text,
-                            desc: descController.text='',
+                          await db.addNote(NoteModel(noteTitle: titleController.text,
+                              noteDescription: descController.text,
+                              createAt: DateTime.now().millisecondsSinceEpoch.toString())
+
                           );
                         }
 
@@ -220,14 +224,14 @@ class _HomePage extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        listOfNote[index][NoteDatabase.N_TITLE],
+                        listOfNote[index].noteTitle,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        listOfNote[index][NoteDatabase.N_DESC],
+                        listOfNote[index].noteDescription,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontSize: 14, color: Colors.black45),
@@ -237,17 +241,17 @@ class _HomePage extends State<HomePage> {
                 ),
                 IconButton(
                   onPressed: () {
-                    openBottomSheet(previousTitle: listOfNote[index][NoteDatabase.N_TITLE],
-                        previousDescription:listOfNote[index][NoteDatabase.N_DESC],
+                    openBottomSheet(previousTitle: listOfNote[index].noteTitle,
+                        previousDescription:listOfNote[index].noteDescription,
                     isUpdating: true,
-                    noteId: listOfNote[index][NoteDatabase.N_id]);
+                    noteId: listOfNote[index].noteId);
 
                   },
                   icon: Icon(Icons.edit),
                 ),
                 IconButton(
                   onPressed: () {
-                    db.deleteNote(id: listOfNote[index][NoteDatabase.N_id]);
+                    db.deleteNote(id: listOfNote[index].noteId!);
                     fetchNote();
                   },
                   icon: Icon(Icons.delete),

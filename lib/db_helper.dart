@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:basic_note_app/note_model.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -44,21 +46,21 @@ class NoteDatabase {
   }
 
 
-  Future<void> addNote({required String title, required String desc}) async {
+  Future<void> addNote(NoteModel noteModel) async {
     Database db = await openDb();
-    await db.insert(NOTE_TABLE,{
-      N_TITLE: title,
-      N_DESC: desc,
-      CREATE_AT: DateTime.now().toString()
-    });
-
-
+    await db.insert(NOTE_TABLE,noteModel.toMap());
   }
 
-  Future<List<Map<String, dynamic>>> getAllNote()async{
+  Future<List<NoteModel>> getAllNote()async{
     Database db = await initDb();
-    List<Map<String,dynamic>> fetchNotes = await db.query(NOTE_TABLE);
-    return fetchNotes;
+    List<NoteModel> allNotes = [];
+    List<Map<String,dynamic>> notes = await db.query(NOTE_TABLE);
+
+    for(Map<String, dynamic> map in notes){
+      NoteModel eachNote = NoteModel.fromMap(map);
+      allNotes.add(eachNote);
+    }
+    return allNotes;
   }
 
   Future<void> deleteNote({required int id})async{
@@ -67,23 +69,20 @@ class NoteDatabase {
   }
 
 
- Future<void> updateNote({required String title, required String description,required int id})async{
+ Future<void> updateNote(NoteModel noteModel)async{
     Database db = await initDb();
-    await db.update(NOTE_TABLE,
-        {
-      N_TITLE: title,
-          N_DESC: description,
-          CREATE_AT: DateTime.now().toString()
-    },
+
+    await db.update(NOTE_TABLE,noteModel.toMap(),
         where: '$N_id=?',
-        whereArgs: [id]
-    );
+        whereArgs: [noteModel.noteId]
+            );
   }
 
 
 }
 
-// Bug take 2 hour
+// Bug take 2 hour i forget to follow parameter passing
+// order i must pass positional args first then where and whereArgs
 /*Future<void> updateNote({required String title, required String description,required int id})async{
   Database db = await initDb();
   db.update(NOTE_TABLE,where: '$N_id=?', whereArgs: [id],
